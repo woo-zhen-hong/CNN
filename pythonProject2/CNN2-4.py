@@ -2,7 +2,15 @@ import numpy as np
 import random
 from PIL import Image
 import torch
-from decimal import *
+
+if torch.backends.mps.is_available():
+    device = torch.device("mps")
+    x = torch.ones(1, device=device)
+    print (x)
+else:
+    print ("MPS device not found.")
+
+learningRate = 0.001
 
 def to_bin(dst):
     im = Image.open(dst, 'r')
@@ -21,25 +29,28 @@ def to_bin(dst):
 
 
 def MSE(x, y):  # y=predict x=answer
+    print('-------------------------------')
+    print(x)
+    print(y)
     length = len(y)
     lossSum = 0
     for i in range(length):
         lossSum += (y[i] - x[i]) * (y[i] - x[i])
+    print('*******************')
+    print('現在是Loss:' + str(lossSum))
     return lossSum / length
 
 
 def sigmoid(r):
-    getcontext().prec = 15
-    return Decimal(1 / (1 + np.exp(-r)))
+    return 1 / (1 + np.exp(-r))
 
 
 def stable_sigmoid(x):
-    getcontext().prec = 15
     if x >= 0:
-        return Decimal(1 / (1 + np.exp(-x)))
+        return 1 / (1 + np.exp(-x))
     else:
         exp_x = np.exp(x)
-        return Decimal(exp_x / (1 + exp_x))
+        return exp_x / (1 + exp_x)
 
 
 def sigmoid_der(x):
@@ -51,21 +62,19 @@ def stable_sigmoid_der(x):
 
 
 def createWeight(inputlen, outputlen):
-    getcontext().prec = 15
     weightLayer = [[0] * outputlen for i in range(inputlen)]  # inputlen列outputlen行
     for i in range(inputlen):
         for j in range(outputlen):
             # weightLayer[i][j] = random.random()
-            weightLayer[i][j] = Decimal(random.uniform(-0.1, 0.1))
+            weightLayer[i][j] = random.uniform(-0.1, 0.1)
     return weightLayer
 
 
 def createBias(inputlen):  # 輸入神經元個數
-    getcontext().prec = 15
     biasLayer = [0] * inputlen
     for i in range(inputlen):
         # biasLayer[i] = random.random()
-        biasLayer[i] = Decimal(random.uniform(-0.1, 0.1))
+        biasLayer[i] = random.uniform(0.1, 0.9)
     return biasLayer
 
 
@@ -73,9 +82,18 @@ def calculate(input, weightLayer, biasLayer, outputlen):  # outputlen 放第幾�
     sum = 0
     for j in range(len(input)):
         sum += input[j] * weightLayer[j][outputlen]
+        # print(input[j])
+        # print("{} {} {}".format(input[j] * weightLayer[outputlen][j],outputlen,j))
     sum += biasLayer[outputlen]
     return sum
 
+def calculate2(input, weightLayer, outputlen):  # outputlen 放第幾個神經元
+    sum = 0
+    for j in range(len(input)):
+        sum += input[j] * weightLayer[j][outputlen]
+        # print(input[j])
+        # print("{} {} {}".format(input[j] * weightLayer[outputlen][j],outputlen,j))
+    return sum
 
 def fullyConnected(input, weightLayer, biasLayer, outputlen):  # outputlen 放神經元總數
     output = [0] * outputlen
@@ -83,32 +101,50 @@ def fullyConnected(input, weightLayer, biasLayer, outputlen):  # outputlen 放�
         output[i] = calculate(input, weightLayer, biasLayer, i)
     return output
 
+def fullyConnected2(input, weightLayer, outputlen):  # outputlen 放神經元總數
+    output = [0] * outputlen
+    for i in range(outputlen):
+        output[i] = calculate2(input, weightLayer, i)
+    return output
 
 def activationFunction(input, activation):
     for i in range(len(input)):
         if activation == "sigmoid":
-            input[i] = stable_sigmoid(input[i])
             input[i] = sigmoid(input[i])
-        elif activation == "softmax":
-            sum = softmaxSum(input)
-            input[i] = softmax(input[i],sum)
+            # input[i] = sigmoid(input[i])
+        # elif activation == "softmax":
+        #     sum = softmaxSum(input)
+        #     input[i] = softmax(input[i],sum)
     return input
 
-learningRate = Decimal(0.001)
 
 def backLastLayer(input, weightLayer, biasLayer, outputLayer, ans):  # backpropagation on the last layer
     sum = 0
     gradient = [0] * len(input)
     for i in range(len(input)):
+        sum = 0
         for j in range(len(outputLayer)):
             sum += weightLayer[i][j] * sigmoid_der(outputLayer[j]) * (outputLayer[j] - ans[j])
         gradient[i] = sum
     for a in range(len(input)):
         for b in range(len(outputLayer)):
             weightLayer[a][b] -= gradient[a] * learningRate
-        biasLayer[a] -= gradient[a] * learningRate
+        # biasLayer[a] -= gradient[a] * learningRate
     return gradient
 
+def backLastLayer2(input, weightLayer, outputLayer, ans):  # backpropagation on the last layer
+    sum = 0
+    gradient = [0] * len(input)
+    for i in range(len(input)):
+        sum = 0
+        for j in range(len(outputLayer)):
+            sum += weightLayer[i][j] * sigmoid_der(outputLayer[j]) * (outputLayer[j] - ans[j])
+        gradient[i] = sum
+    for a in range(len(input)):
+        for b in range(len(outputLayer)):
+            weightLayer[a][b] -= gradient[a] * learningRate
+        # biasLayer[a] -= gradient[a] * learningRate
+    return gradient
 
 def backHiddenLayer(input, weightLayer, biasLayer, outputLayer, derivation):  # backpropagation on the hidden layer
     # derivation is from the previous layer
@@ -116,32 +152,35 @@ def backHiddenLayer(input, weightLayer, biasLayer, outputLayer, derivation):  # 
     sum = 0
     gradient = [0] * len(input)
     for i in range(len(input)):
+        sum = 0
         for j in range(len(outputLayer)):
             sum += weightLayer[i][j] * sigmoid_der(outputLayer[j]) * derivation[j]
         gradient[i] = sum
     for a in range(len(input)):
         for b in range(len(outputLayer)):
             weightLayer[a][b] -= gradient[a] * learningRate
-        biasLayer[a] -= gradient[a] * learningRate
+        # biasLayer[a] -= gradient[a] * learningRate
     return gradient
 
+def backHiddenLayer2(input, weightLayer, outputLayer, derivation):  # backpropagation on the hidden layer
+    # derivation is from the previous layer
+    # derivation 下一層的微分結果
+    sum = 0
+    gradient = [0] * len(input)
+    for i in range(len(input)):
+        sum = 0
+        for j in range(len(outputLayer)):
+            sum += weightLayer[i][j] * sigmoid_der(outputLayer[j]) * derivation[j]
+        gradient[i] = sum
+    for a in range(len(input)):
+        for b in range(len(outputLayer)):
+            weightLayer[a][b] -= gradient[a] * learningRate
+        # biasLayer[a] -= gradient[a] * learningRate
+    return gradient
 
-# =============================================================================
-# def flaten(pixel):
-#     arr = []
-#     for i in range(0, len(pixel)):
-#         count = 0
-#         for rgb in range(0, 3):
-#             count += pixel[i][rgb]
-#         if (count < 470):
-#             arr.append(int(1))
-#         else:
-#             arr.append(int(0))
-#     return arr
-# =============================================================================
 def flaten(pixel):
     arr = []
-    for i in range(len(pixel)):
+    for i in range(0, len(pixel)):
         if (pixel[i] < 100):
             arr.append(int(1))
         else:
@@ -164,12 +203,6 @@ def calAUC(prob, labels):
     print(auc)
     return auc
 
-if torch.backends.mps.is_available():
-    device = torch.device("mps")
-    x = torch.ones(1, device=device)
-    print (x)
-else:
-    print ("MPS device not found.")
 
 # make answer
 # def answer(i):
@@ -180,7 +213,7 @@ else:
 #         else:
 #             arr.append(0)
 #     return arr
-answer = [[0]*2 for i in range(3)]
+answer = [[0]*3 for i in range(4)]
 answer[1] = [1,0]
 answer[2] = [0,1]
 
@@ -224,27 +257,26 @@ gradientHiddenLayer1 = [0] * 400
 #             gradientHiddenLayer1 = backHiddenLayer(input, layer1Weight, layer1Bias, HiddenLayer1, gradientHiddenLayer2)
 
 # train for HiddenLayer 2
-for epoch in range(400):
-    # print(epoch)
+for epoch in range(100):
+    print(epoch)
     for number in range(1, 3):
-        for case in range(1, 101):
-            imagePath = "1to10/{}/{}_{}.png".format(number, number, case)
+        for case in range(1, 201):
+            imagePath = "1to10-20x20/{}/{}_{}.png".format(number,number,case)
             image = Image.open(imagePath)
             input = np.array(image.getdata(), dtype=float)
             input = flaten(input)
-            # print(input)
-            HiddenLayer1 = fullyConnected(input, layer1Weight, layer1Bias, 30)
+            HiddenLayer1 = fullyConnected2(input, layer1Weight, 30)
             HiddenLayer1 = activationFunction(HiddenLayer1, "sigmoid")
-            HiddenLayer2 = fullyConnected(HiddenLayer1, layer2Weight, layer2Bias, 30)
+            HiddenLayer2 = fullyConnected2(HiddenLayer1, layer2Weight, 30)
             HiddenLayer2 = activationFunction(HiddenLayer2, "sigmoid")
-            finalLayer = fullyConnected(HiddenLayer2, layer3Weight, layer3Bias, 2)
+            finalLayer = fullyConnected2(HiddenLayer2, layer3Weight, 2)
             finalLayer = activationFunction(finalLayer, "sigmoid")
-            # print(MSE(finalLayer,answer[number % 2]))
-            gradientHiddenLayer3 = backLastLayer(HiddenLayer2, layer3Weight, layer3Bias, finalLayer, answer[number])
-            gradientHiddenLayer2 = backHiddenLayer(HiddenLayer1, layer2Weight, layer2Bias, HiddenLayer2,
+            gradientHiddenLayer3 = backLastLayer2(HiddenLayer2, layer3Weight, finalLayer, answer[number])
+            gradientHiddenLayer2 = backHiddenLayer2(HiddenLayer1, layer2Weight, HiddenLayer2,
                                                    gradientHiddenLayer3)
-            gradientHiddenLayer1 = backHiddenLayer(input, layer1Weight, layer1Bias, HiddenLayer1, gradientHiddenLayer2)
-
+            gradientHiddenLayer1 = backHiddenLayer2(input, layer1Weight, HiddenLayer1, gradientHiddenLayer2)
+            if(MSE(finalLayer, answer[number]) < 0.1):
+                break
 correct = 0
 count = 0
 auc = 0.0
@@ -280,7 +312,7 @@ auc = 0.0
 # print(finalLayer)
 
 # test for HiddenLayer 2 and for more than one test
-for i in range(101,111):
+for i in range(101,141):
     if (i % 2 != 0) :
         number = 1
     else:
@@ -289,16 +321,21 @@ for i in range(101,111):
     image = Image.open(imagePath)
     input = np.array(image.getdata(), dtype=float)
     input = flaten(input)
-    HiddenLayer1 = fullyConnected(input, layer1Weight, layer1Bias, 30)
+    HiddenLayer1 = fullyConnected2(input, layer1Weight, 30)
     HiddenLayer1 = activationFunction(HiddenLayer1, "sigmoid")
-    # print(HiddenLayer1)
-    HiddenLayer2 = fullyConnected(HiddenLayer1, layer2Weight, layer2Bias, 30)
+    HiddenLayer2 = fullyConnected2(HiddenLayer1, layer2Weight, 30)
     HiddenLayer2 = activationFunction(HiddenLayer2, "sigmoid")
-    finalLayer = fullyConnected(HiddenLayer2, layer3Weight, layer3Bias, 2)
+    finalLayer = fullyConnected2(HiddenLayer2, layer3Weight, 2)
     finalLayer = activationFunction(finalLayer, "sigmoid")
     # print('------------------------------')
     print('現在是數字' + str(number))
     print(finalLayer)
+    # if(finalLayer[0]  >finalLayer[1]):
+    #     print('[1,0]')
+    # else:
+    #     print('[0,1]')
+        
+    
 
 # test for HiddenLayer 2
 # imagePath = "1to10/2/2_100.png"

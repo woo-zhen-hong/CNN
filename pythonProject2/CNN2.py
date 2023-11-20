@@ -63,8 +63,6 @@ def calculate(input,weightLayer,biasLayer,outputlen): #outputlen 放第幾個神
     sum = 0
     for j in range(len(input)):
         sum += input[j] * weightLayer[j][outputlen]
-        #print(input[j])
-        #print("{} {} {}".format(input[j] * weightLayer[outputlen][j],outputlen,j))
     sum += biasLayer[outputlen]
     return sum
 
@@ -78,7 +76,6 @@ def activationFunction(input,activation):
     for i in range(len(input)):
         if activation == "sigmoid":
             input[i] = stable_sigmoid(input[i])
-            # input[i] = sigmoid(input[i])
         # elif activation == "softmax":
         #     sum = softmaxSum(input)
         #     input[i] = softmax(input[i],sum)
@@ -96,7 +93,7 @@ def backLastLayer(input,weightLayer,biasLayer,outputLayer,ans): #backpropagation
     for a in range(len(input)):
         for b in range(len(outputLayer)):
             weightLayer[a][b] -= gradient[a] * learningRate
-        #biasLayer[a] -= gradient[a] * learningRate
+        biasLayer[a] -= gradient[a] * learningRate
     return gradient
 
 def backHiddenLayer(input,weightLayer,biasLayer,outputLayer,derivation): #backpropagation on the hidden layer
@@ -111,7 +108,7 @@ def backHiddenLayer(input,weightLayer,biasLayer,outputLayer,derivation): #backpr
     for a in range(len(input)):
         for b in range(len(outputLayer)):
             weightLayer[a][b] -= gradient[a] * learningRate
-        #biasLayer[a] -= gradient[a] * learningRate
+        biasLayer[a] -= gradient[a] * learningRate
     return gradient
 
 def flaten(pixel):

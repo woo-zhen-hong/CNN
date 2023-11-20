@@ -2,6 +2,7 @@ import numpy as np
 import random
 from PIL import Image, ImageDraw
 import matplotlib.pyplot as plt
+import torch
 
 def to_bin(dst):
     im = Image.open(dst, 'r')
@@ -94,7 +95,7 @@ def activationFunction(input,activation):
     return input
 
 movement = 0
-learningRate = 0.5
+learningRate = 0.001
 def backWardSoftmax(weightLayer,biasLayer,learningRate,input,output,ans): #cross entropy
     #hidden layer to final layer
     for i in range(len(output)):
@@ -209,6 +210,22 @@ def backRelu(weightLayer1,weightLayer2,biasLayer1,input,output,finalOutput,ans,l
         gradientBias =  we / len(ans)
         biasLayer1[x] -= lr * gradientBias
 
+def calAUC(prob,labels):
+    f = list(zip(prob,labels))
+    rank = [values2 for values1,values2 in sorted(f,key=lambda x:x[0])]
+    rankList = [i+1 for i in range(len(rank)) if rank[i]==1]
+    posNum = 0
+    negNum = 0
+    for i in range(len(labels)):
+        if (labels[i] == 1):
+          posNum+=1
+        else:
+          negNum+=1
+    auc = 0
+    auc = (sum(rankList) - (posNum*(posNum+1))/2)/(posNum*negNum)
+    print(auc)
+    return auc
+
 answer = [[0]*10 for i in range(10)]
 for ans in range(10):
     if(ans == 0):
@@ -225,57 +242,71 @@ for ans in range(10):
 # layer2Weight = createWeight(10,10)
 # layer1Bias = createBias(10)
 # layer2Bias = createBias(10)
-layer1Weight = createWeight(784,15)
-layer2Weight = createWeight(15,10)
-layer1Bias = createBias(15)
+layer1Weight = createWeight(100,30)
+layer2Weight = createWeight(30,10)
+layer1Bias = createBias(30)
 layer2Bias = createBias(10)
 
+if torch.backends.mps.is_available():
+    device = torch.device("mps")
+    x = torch.ones(1, device=device)
+    print (x)
+else:
+    print ("MPS device not found.")
+
 #train
-for cla in range(100):
-    for nu in range(10):
-        for qr in range(100):
-            imagePath = "numbers/{}/{}.png".format(nu, qr)
-            image = Image.open(imagePath)
-            pixel = np.array(image.getdata())
-            input = [0] * 784
-            for pi in range(784):
-                if(pixel[pi][3] != 0):
-                    input[pi] = -1
-                else:
-                    input[pi] = 1
+for cla in range(200):
+    for nu in range(1,10):
+        for qr in range(1,11):
+            imagePath = "1to10/{}/{}_{}.png".format(nu,nu,qr)
+            # image = Image.open(imagePath)
+            # pixel = np.array(image.getdata())
+            # input = [0] * 784
+            # for pi in range(784):
+            #     if(pixel[pi][3] != 0):
+            #         input[pi] = -1
+            #     else:
+            #         input[pi] = 1
+            input = to_bin(imagePath)
             HiddenLayer = [0] * 15
-            HiddenLayer = fullyConnected(input,layer1Weight,layer1Bias,15)
+            HiddenLayer = fullyConnected(input,layer1Weight,layer1Bias,30)
             HiddenLayer = activationFunction(HiddenLayer,"sigmoid")
             finalLayer = fullyConnected(HiddenLayer,layer2Weight,layer2Bias,10)
             finalLayer = activationFunction(finalLayer,"softmax")
+            # print(crossEntropy(finalLayer,answer[nu]))
+            print(MSE(finalLayer,answer[nu]))
             # sigmoid + sigmoid + mean square error
-            #backOut3(layer2Weight, layer2Bias, learningRate, HiddenLayer, finalLayer, answer[nu])
-            #backWardSigmoid2(layer1Weight, layer2Weight, layer1Bias, input, HiddenLayer, finalLayer, answer[nu])
+            # backOut3(layer2Weight, layer2Bias, learningRate, HiddenLayer, finalLayer, answer[nu])
+            # backWardSigmoid2(layer1Weight, layer2Weight, layer1Bias, input, HiddenLayer, finalLayer, answer[nu])
             # sigmoid + softmax + cross entropy
             backWardSoftmax(layer2Weight,layer2Bias,learningRate,HiddenLayer,finalLayer,answer[nu])
             backWardSigmoid(layer1Weight,layer2Weight,layer1Bias,input,HiddenLayer,finalLayer,answer[nu])
 
 correct = 0
 count = 0
+auc = 0.0
 
 #test
 for cla in range(50):
-    for nu in range(10):
-        for qr in range(50):
-            imagePath = "numbers/{}/{}.png".format(nu, qr)
-            image = Image.open(imagePath)
-            pixel = np.array(image.getdata())
-            input = [0] * 784
-            for pi in range(784):
-                if (pixel[pi][3] != 0):
-                    input[pi] = -1
-                else:
-                    input[pi] = 1
+    for nu in range(1,10):
+        for qr in range(1,11):
+            imagePath = "1to10/{}/{}_{}.png".format(nu,nu,qr)
+            # image = Image.open(imagePath)
+            # pixel = np.array(image.getdata())
+            # input = [0] * 784
+            # for pi in range(784):
+            #     if (pixel[pi][3] != 0):
+            #         input[pi] = -1
+            #     else:
+            #         input[pi] = 1
+            input = to_bin(imagePath)
             HiddenLayer = [0] * 15
-            HiddenLayer = fullyConnected(input,layer1Weight,layer1Bias,15)
+            HiddenLayer = fullyConnected(input,layer1Weight,layer1Bias,30)
             HiddenLayer = activationFunction(HiddenLayer,"sigmoid")
             finalLayer = fullyConnected(HiddenLayer,layer2Weight,layer2Bias,10)
             finalLayer = activationFunction(finalLayer,"softmax")
+            numAuc = calAUC(finalLayer,answer[nu])
+            auc += numAuc
             max = -2
             for ma in range(10):
                 if (finalLayer[ma] > max):
@@ -293,3 +324,5 @@ for cla in range(50):
             else:
                 count += 1
             print("{}: 數字{} 第{}個 目前正確率：{}".format(cla, nu, qr, correct / count))
+
+print(auc/4500)

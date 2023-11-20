@@ -83,7 +83,7 @@ model = NeuralNetwork(input_size=9, hidden_size=5, output_size=2)
 # 訓練模型
 model.train(X, Y, epochs=50, learning_rate=0.00001)
 
-test = np.array([ [0, 1, 1, 1, 0, 1, 1, 1, 0]])
+test = np.array([ [0, 1, 0, 0, 0, 0, 0, 1, 0]])
 
 # 預測结果
 predictions = model.predict(test)

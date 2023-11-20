@@ -61,22 +61,22 @@ for i in range(3,5):
 # 訓練神經網路
 for epoch in range(1001):
     # 向前傳播
-    input_layer_hidden = np.dot(X, weights_input_hidden)
-    input_layer_hidden = sigmoid(input_layer_hidden)
-    hidden_layer_output = np.dot(input_layer_hidden, weights_hidden_output)
-    hidden_layer_output = sigmoid(hidden_layer_output)
+    input_layer_hidden_1 = np.dot(X, weights_input_hidden)
+    input_layer_hidden_2 = sigmoid(input_layer_hidden_1)
+    hidden_layer_output_1 = np.dot(input_layer_hidden_2, weights_hidden_output)
+    hidden_layer_output_2 = sigmoid(hidden_layer_output_1)
 
     # 計算損失（MSE）
-    error = Y - hidden_layer_output
+    error = Y - hidden_layer_output_2
     loss = np.mean(error ** 2)
 
     # 反向傳播
-    d_output = error * sigmoid_derivative(hidden_layer_output)
+    d_output = error * sigmoid_derivative(hidden_layer_output_1)
     error_hidden = d_output.dot(weights_hidden_output.T)
-    d_hidden = error_hidden * sigmoid_derivative(input_layer_hidden)
+    d_hidden = error_hidden * sigmoid_derivative(input_layer_hidden_1)
 
     # 更新權重
-    weights_hidden_output += input_layer_hidden.T.dot(d_output) * learning_rate
+    weights_hidden_output += input_layer_hidden_2.T.dot(d_output) * learning_rate
     X = np.array(X)
     weights_input_hidden += X.T.dot(d_hidden) * learning_rate
 
