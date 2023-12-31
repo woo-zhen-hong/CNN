@@ -32,7 +32,7 @@ The fullyConnected layer and backpropagation layer is coded by MingYao and woo-z
 * 測試資料個數(Test Data): 各100張(100 pics/per number)
 * 測試正確率(Test Accuracy): 100%
 * 備註(Remark): 有分訓練集與測試集
-
+----------------------------------------------------------------------
 * 模型(Model): NKNU-CNN
 * 訓練內容(Train Content): 手寫數字0-9(Hand-Written Number 0-9)
 * 步長(Stride): 1
@@ -67,7 +67,7 @@ The fullyConnected layer and backpropagation layer is coded by MingYao and woo-z
 * 測試正確率(Test Accuracy): 83.33%
 * 時間(Time): 2分鐘11秒
 * 備註(Remark): 有分訓練集與測試集
-
+----------------------------------------------------------------------
 * 模型(Model): Pytorch
 * 訓練內容(Train Content): CIFAR-10 飛機、汽車、鳥(CIFAR-10 Airplane、Car、Bird)
 * 步長(Stride): 2
@@ -84,7 +84,7 @@ The fullyConnected layer and backpropagation layer is coded by MingYao and woo-z
 * 測試正確率(Test Accuracy): 84.75%
 * 時間(Time): 3分鐘49秒
 * 備註(Remark): 有分訓練集與測試集
-
+----------------------------------------------------------------------
 * 模型(Model): NKNU-CNN
 * 訓練內容(Train Content): CIFAR-10 飛機、汽車、鳥、貓、鹿(CIFAR-10 Airplane、Car、Bird、Cat、Deer)
 * 步長(Stride): 2
@@ -101,7 +101,7 @@ The fullyConnected layer and backpropagation layer is coded by MingYao and woo-z
 * 測試正確率(Test Accuracy): 87.2%
 * 時間(Time): 15分鐘14秒
 * 備註(Remark): 有分訓練集與測試集
-
+----------------------------------------------------------------------
 * 模型(Model): NKNU-CNN
 * 訓練內容(Train Content): CIFAR-10 飛機、汽車、鳥、貓、鹿、狗、青蛙、馬、船、卡車(CIFAR-10 Airplane、Car、Bird、Cat、Deer、Dog、Frog、Horse、Boat、Truck)
 * 步長(Stride): 2
